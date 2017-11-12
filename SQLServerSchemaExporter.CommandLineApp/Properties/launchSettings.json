@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SQLServerSchemaExporter.CommandLineApp": {
+      "commandName": "Project",
+      "commandLineArgs": "-s localdb\\ProjectsV13 -d BattleRoyaleDB -o C:\\projects\\sql-server-mock-schema-exporter\\output"
+    }
+  }
+}

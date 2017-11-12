@@ -1,10 +1,13 @@
 ﻿using Microsoft.Extensions.CommandLineUtils;
-using System;
+using NLog;
+using SQLServerSchemaExporter.Base;
 
 namespace SQLServerSchemaExporter.CommandLineApp
 {
     class Program
     {
+        private static readonly Logger _log = LogManager.GetCurrentClassLogger();
+
         static void Main(string[] args)
         {
             var app = new CommandLineApplication();
@@ -24,6 +27,7 @@ namespace SQLServerSchemaExporter.CommandLineApp
                     // Either user & pass or neither
                     if (userOption.HasValue() ^ passOption.HasValue())
                     {
+                        _log.Warn("Attempted to call with either username or password but not both");
                         command.ShowHelp();
                         return -1;
                     }
@@ -31,7 +35,17 @@ namespace SQLServerSchemaExporter.CommandLineApp
                     // Check mandatory parameters or exit with help displayed
                     if (serverOption.HasValue() && dbOption.HasValue() && outputDirectoryOption.HasValue())
                     {
-                        // TODO - Delegate responsibility to the rest of the app
+                        var mockSchemaCreator = new MockSchemaCreator(
+                            server: serverOption.Value(),
+                            db: dbOption.Value(),
+                            username: userOption.HasValue() ? userOption.Value() : null,
+                            password: passOption.HasValue() ? passOption.Value() : null);
+                        var mockSchemaWriter = new MockSchemaWriter(
+                            outputDirectory: outputDirectoryOption.Value(),
+                            overwriteExistingFiles: overwriteExistingOption.HasValue());
+
+                        var schema = mockSchemaCreator.CreateMockSchema();
+                        mockSchemaWriter.WriteDatabaseSchema(schema);
                     }
                     else
                     {
@@ -41,6 +55,8 @@ namespace SQLServerSchemaExporter.CommandLineApp
 
                     return 0;
                 });
+
+                command.Execute(args);
             });
         }
     }
