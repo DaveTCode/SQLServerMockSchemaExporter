@@ -263,4 +263,4 @@ __pycache__/
 
 # Don't include vscode settings folder
 .vscode
-
+**/launchsettings.json
