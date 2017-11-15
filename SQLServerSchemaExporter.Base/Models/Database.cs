@@ -18,13 +18,16 @@ namespace SQLServerSchemaExporter.Base.Models
         internal IReadOnlyCollection<Schema> Schemas { get; }
 
         internal IReadOnlyCollection<TableType> TableTypes { get; }
+
+        internal IReadOnlyCollection<Function> Functions { get; }
         
         internal Database(string name,
             Settings settings,
             IEnumerable<Schema> schemas,
             IEnumerable<TableOrView> tablesAndviews, 
             IEnumerable<Procedure> procedures,
-            IEnumerable<TableType> tableTypes)
+            IEnumerable<TableType> tableTypes,
+            IEnumerable<Function> functions)
         {
             Name = name;
             Settings = settings;
@@ -32,6 +35,7 @@ namespace SQLServerSchemaExporter.Base.Models
             TablesAndViews = new List<TableOrView>(tablesAndviews).AsReadOnly();
             StoredProcedures = new List<Procedure>(procedures).AsReadOnly();
             TableTypes = new List<TableType>(tableTypes).AsReadOnly();
+            Functions = new List<Function>(functions).AsReadOnly();
         }
     }
 }

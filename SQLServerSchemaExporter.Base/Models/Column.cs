@@ -3,26 +3,27 @@
     /// <summary>
     /// Represents a single column in a single database table.
     /// </summary>
-    internal class Column : SingleDataItem
+    internal class Column
     {
+        internal string Name { get; }
+
+        internal Type Type { get; }
+
         internal bool IsNullable { get; }
 
         internal string DefaultValue { get; }
 
-        internal Column(string name, string dbType, int? maxCharacterLength, bool isNullable, string columnDefault)
-            : base(name, dbType, maxCharacterLength)
+        internal Column(string name, Type type, bool isNullable, string columnDefault)
         {
+            Name = name;
+            Type = type;
             IsNullable = isNullable;
             DefaultValue = columnDefault;
         }
 
         internal string ToSqlString()
         {
-            var sqlString = $"[{Name}] {DbType}";
-            if (MaxCharacterLength.HasValue)
-            {
-                sqlString += $"({(MaxCharacterLength == -1 ? "MAX" : MaxCharacterLength.Value.ToString())})";
-            }
+            var sqlString = $"[{Name}] {Type.ToSqlString()}";
 
             if (!IsNullable)
             {

@@ -27,8 +27,9 @@ namespace SQLServerSchemaExporter.Base
             var tables = schemas.SelectMany(schema => _dbLayer.GetTablesAndViews(schema));
             var tableTypes = schemas.SelectMany(schema => _dbLayer.GetTableTypes(schema));
             var procedures = schemas.SelectMany(schema => _dbLayer.GetStoredProcedures(schema));
+            var functions = schemas.SelectMany(schema => _dbLayer.GetFunctions(schema));
 
-            return new Database(_dbName, databaseSettings, schemas, tables, procedures, tableTypes);
+            return new Database(_dbName, databaseSettings, schemas, tables, procedures, tableTypes, functions);
         }
     }
 }

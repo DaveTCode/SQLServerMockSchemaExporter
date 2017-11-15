@@ -44,19 +44,41 @@ namespace SQLServerSchemaExporter.Base.DB
         /// <summary>
         /// For a given table this returns the list of columns in that table
         /// in a form that means they can be reconstructed.
+        ///
+        /// This works for user defined table types, table valued parameters,
+        /// views and tables.
         /// </summary>
         /// <param name="schema">The schema where the table lives</param>
         /// <param name="table">The table name in the database</param>
         /// <returns>A list of columns. Never null.</returns>
-        private List<Column> GetTableColumns(Schema schema, string table)
+        private List<Column> GetColumns(Schema schema, string table)
         {
             var columns = new List<Column>();
 
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand($@"
-                SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT
-                FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_NAME = @table AND TABLE_SCHEMA = @schema", connection))
+                SELECT c.name ,
+                    st.name ,
+                    COLUMNPROPERTY(c.object_id, c.name, 'charmaxlen') ,
+                    c.is_nullable ,
+                    dc.definition
+                FROM   (   SELECT name,
+                                object_id,
+                                schema_id
+                        FROM sys.objects
+                        WHERE type IN ('TF', 'T', 'U', 'V')
+                        UNION ALL
+                        SELECT name ,
+                                type_table_object_id AS object_id,
+                                schema_id
+                        FROM   sys.table_types) AS t
+                    INNER JOIN sys.schemas AS s ON s.schema_id = t.schema_id
+                    INNER JOIN sys.columns AS c ON t.object_id = c.object_id
+                    INNER JOIN sys.systypes AS st ON st.xusertype = c.user_type_id
+                    LEFT JOIN sys.default_constraints AS dc ON dc.parent_column_id = c.column_id
+                                                                AND dc.parent_object_id = c.object_id
+                WHERE  t.name = @table
+                    AND s.name = @schema", connection))
             {
                 command.Parameters.AddWithValue("@table", table);
                 command.Parameters.AddWithValue("@schema", schema.Name);
@@ -68,9 +90,11 @@ namespace SQLServerSchemaExporter.Base.DB
                     {
                         columns.Add(new Column(
                             name: reader.GetString(0),
-                            dbType: reader.GetString(1),
-                            maxCharacterLength: reader.IsDBNull(2) ? (int?) null : reader.GetInt32(2),
-                            isNullable: reader.GetString(3) == "NO",
+                            type: new Models.Type(
+                                dbType: reader.GetString(1),
+                                maxCharacterLength: reader.IsDBNull(2) ? (int?) null : reader.GetInt32(2)
+                            ),
+                            isNullable: reader.GetBoolean(3),
                             columnDefault: reader.IsDBNull(4) ? null : reader.GetString(4)
                         ));
                     }
@@ -108,7 +132,7 @@ namespace SQLServerSchemaExporter.Base.DB
                         tables.Add(new TableOrView(
                             name: tableName, 
                             schema: schema,
-                            columns: GetTableColumns(schema, tableName)
+                            columns: GetColumns(schema, tableName)
                         ));
                     }
                 }
@@ -118,11 +142,10 @@ namespace SQLServerSchemaExporter.Base.DB
         }
 
         /// <summary>
-        /// Get a list of all the schema in th database.
-        /// 
-        /// @@@TODO - This will currently return schemas that we don't want to recreate (e.g. db_owner)
+        /// Get a list of all the schema in the database including those which 
+        /// are guaranteed to exist like dbo.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>A list of schemas. Never null</returns>
         internal List<Schema> GetSchemas()
         {
             var schemas = new List<Schema>();
@@ -185,8 +208,10 @@ namespace SQLServerSchemaExporter.Base.DB
 
                         schemas.Add(new ProcedureParameter(
                             name: reader.GetString(0),
-                            dbType: dbType,
-                            maxCharacterLength: reader.IsDBNull(2) ? (int?)null : reader.GetInt32(2),
+                            type: new Models.Type(
+                                dbType: dbType,
+                                maxCharacterLength: reader.IsDBNull(2) ? (int?) null : reader.GetInt32(2)
+                            ),
                             isOutput: reader.GetString(3) != "IN",
                             isReadonly: isReadonly
                         ));
@@ -254,6 +279,12 @@ namespace SQLServerSchemaExporter.Base.DB
             }
         }
 
+        /// <summary>
+        /// Get a list of all user defined table types in a specified schema of a 
+        /// database.
+        /// </summary>
+        /// <param name="schema">The schema to search</param>
+        /// <returns>A list of 0-n table types, never null</returns>
         internal List<TableType> GetTableTypes(Schema schema)
         {
             var tableTypes = new List<TableType>();
@@ -277,7 +308,7 @@ namespace SQLServerSchemaExporter.Base.DB
                         tableTypes.Add(new TableType(
                             name: tableName,
                             schema: schema,
-                            columns: GetTableTypeColumns(tableName)
+                            columns: GetColumns(schema, tableName)
                         ));
                     }
                 }
@@ -286,43 +317,61 @@ namespace SQLServerSchemaExporter.Base.DB
             return tableTypes;
         }
 
-        private List<Column> GetTableTypeColumns(string tableTypeName)
+        /// <summary>
+        /// Get a list of all functions in a specified schema of a 
+        /// database.
+        /// </summary>
+        /// <param name="schema">The schema to search</param>
+        /// <returns>A list of 0-n functions, never null</returns>
+        internal List<Function> GetFunctions(Schema schema)
         {
-            var columns = new List<Column>();
+            var tableTypes = new List<Function>();
 
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand(@"
-                SELECT c.name ,
-                       st.name ,
-                       COLUMNPROPERTY(c.object_id, c.name, 'charmaxlen') ,
-                       c.is_nullable
-                FROM   sys.table_types AS tt
-                    INNER JOIN sys.columns AS c ON c.object_id = tt.type_table_object_id
-                    INNER JOIN sys.systypes AS ST ON ST.xtype = c.system_type_id
-                WHERE  tt.name = @tableTypeName;
+                SELECT ROUTINE_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH
+                FROM   INFORMATION_SCHEMA.ROUTINES
+                WHERE  ROUTINE_TYPE = 'FUNCTION' AND ROUTINE_SCHEMA = @schema
                 ", connection))
             {
-                command.Parameters.AddWithValue("@tableTypeName", tableTypeName);
+                command.Parameters.AddWithValue("@schema", schema.Name);
 
                 connection.Open();
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        var procedureName = reader.GetString(0);
+                        var functionName = reader.GetString(0);
+                        var functionReturnType = reader.GetString(1);
 
-                        columns.Add(new Column(
-                            name: reader.GetString(0),
-                            dbType: reader.GetString(1),
-                            maxCharacterLength: reader.IsDBNull(2) ? (int?) null : reader.GetInt32(2),
-                            isNullable: reader.GetBoolean(3),
-                            columnDefault: null
-                        ));
+                        // Table type and scalar type functions are both handled in a similar way
+                        // below where only the return type is distinct.
+                        if (functionReturnType == "TABLE")
+                        {
+                            tableTypes.Add(new TableValueFunction(
+                                name: functionName,
+                                schema: schema,
+                                returnColumns: GetColumns(schema, functionName),
+                                parameters: GetProcedureParameters(schema, functionName)
+                            ));
+                        }
+                        else
+                        {
+                            tableTypes.Add(new ScalarFunction(
+                                name: functionName,
+                                schema: schema,
+                                returnType: new Models.Type(
+                                    dbType: functionReturnType,
+                                    maxCharacterLength: reader.IsDBNull(2) ? (int?) null : reader.GetInt32(2)
+                                ),
+                                parameters: GetProcedureParameters(schema, functionName)
+                            ));
+                        }
                     }
                 }
             }
 
-            return columns;
+            return tableTypes;
         }
     }
 }

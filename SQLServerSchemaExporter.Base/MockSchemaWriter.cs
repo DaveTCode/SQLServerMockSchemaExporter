@@ -39,6 +39,7 @@ namespace SQLServerSchemaExporter.Base
                 Directory.CreateDirectory(Path.Combine(schemaDirectory, "Tables"));
                 Directory.CreateDirectory(Path.Combine(schemaDirectory, "Procedures"));
                 Directory.CreateDirectory(Path.Combine(schemaDirectory, "TableTypes"));
+                Directory.CreateDirectory(Path.Combine(schemaDirectory, "Functions"));
 
                 if ((!File.Exists(schemaDefinitionPath) || _overwriteExistingFiles) && 
                     !schema.IsDefaultSchema) // The default schemas will already exist so must not be recreated
@@ -82,6 +83,18 @@ namespace SQLServerSchemaExporter.Base
                     using (var stream = File.CreateText(tableTypeDefinitionPath))
                     {
                         stream.Write(tableType.ToSqlString());
+                    }
+                }
+            }
+
+            foreach (var function in database.Functions)
+            {
+                var tableTypeDefinitionPath = Path.Combine(_outputDirectory, function.Schema.Name, "Functions", function.Name) + ".sql";
+                if (!File.Exists(tableTypeDefinitionPath) || _overwriteExistingFiles)
+                {
+                    using (var stream = File.CreateText(tableTypeDefinitionPath))
+                    {
+                        stream.Write(function.ToSqlString());
                     }
                 }
             }

@@ -3,26 +3,27 @@
     /// <summary>
     /// Represents a stored procedure parameter
     /// </summary>
-    internal class ProcedureParameter : SingleDataItem
+    internal class ProcedureParameter
     {
+        internal string Name { get; }
+
+        internal Type Type { get; }
+
         internal bool IsOutput { get; }
 
         internal bool IsReadonly { get; }
 
-        internal ProcedureParameter(string name, string dbType, int? maxCharacterLength, bool isOutput, bool isReadonly)
-            : base (name, dbType, maxCharacterLength)
+        internal ProcedureParameter(string name, Type type, bool isOutput, bool isReadonly)
         {
+            Name = name;
+            Type = type;
             IsOutput = isOutput;
             IsReadonly = isReadonly;
         }
 
         internal string ToSqlString()
         {
-            var sqlString = $"{Name} {DbType}";
-            if (MaxCharacterLength.HasValue)
-            {
-                sqlString += $"({(MaxCharacterLength == -1 ? "MAX" : MaxCharacterLength.Value.ToString())})";
-            }
+            var sqlString = $"{Name} {Type.ToSqlString()}";
 
             if (IsOutput)
             {
