@@ -24,7 +24,7 @@
         /// </summary>
         internal virtual string ToSqlString()
         {
-            var sqlString = $"[{Name}] {DbType}";
+            var sqlString = $"{Name} {DbType}";
             if (MaxCharacterLength.HasValue)
             {
                 sqlString += $"({(MaxCharacterLength == -1 ? "MAX" : MaxCharacterLength.Value.ToString())})";

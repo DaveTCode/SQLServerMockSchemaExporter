@@ -21,8 +21,7 @@ namespace SQLServerSchemaExporter.Base.DB
         /// <param name="db"></param>
         internal DBLayer(string server, string db)
         {
-            //_connectionString = $"Server={server};Database={db};Trusted_Connection=True;";
-            _connectionString = "Data Source=(localdb)\\ProjectsV13;Initial Catalog=BattleRoyaleDB;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=True;ApplicationIntent=ReadWrite;MultiSubnetFailover=False";
+            _connectionString = $"Server={server};Database={db};Trusted_Connection=True;";
         }
 
         /// <summary>
@@ -129,7 +128,9 @@ namespace SQLServerSchemaExporter.Base.DB
             var schemas = new List<Schema>();
 
             using (var connection = new SqlConnection(_connectionString))
-            using (var command = new SqlCommand($"SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA", connection))
+            using (var command = new SqlCommand($@"
+                SELECT SCHEMA_NAME 
+                FROM INFORMATION_SCHEMA.SCHEMATA", connection))
             {
                 connection.Open();
                 using (var reader = command.ExecuteReader())
@@ -159,7 +160,8 @@ namespace SQLServerSchemaExporter.Base.DB
 
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand($@"
-                SELECT PARAMETER_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, PARAMETER_MODE
+                SELECT PARAMETER_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, PARAMETER_MODE, 
+                       USER_DEFINED_TYPE_SCHEMA, USER_DEFINED_TYPE_NAME
                 FROM   INFORMATION_SCHEMA.PARAMETERS
                 WHERE  SPECIFIC_NAME = @procedureName AND SPECIFIC_SCHEMA = @schema", connection))
             {
@@ -171,11 +173,22 @@ namespace SQLServerSchemaExporter.Base.DB
                 {
                     while (reader.Read())
                     {
+                        var dbType = reader.GetString(1);
+                        var isReadonly = false;
+
+                        // Table type parameters have the parameter type stored in a different column
+                        if (dbType == "table type")
+                        {
+                            dbType = $"{reader.GetString(4)}.{reader.GetString(5)}";
+                            isReadonly = true;
+                        }
+
                         schemas.Add(new ProcedureParameter(
                             name: reader.GetString(0),
-                            dbType: reader.GetString(1),
+                            dbType: dbType,
                             maxCharacterLength: reader.IsDBNull(2) ? (int?)null : reader.GetInt32(2),
-                            isOutput: reader.GetString(3) != "IN"
+                            isOutput: reader.GetString(3) != "IN",
+                            isReadonly: isReadonly
                         ));
                     }
                 }
@@ -219,6 +232,97 @@ namespace SQLServerSchemaExporter.Base.DB
             }
 
             return procedures;
+        }
+
+        /// <summary>
+        /// Get the settings which are defined on a per database level.
+        /// </summary>
+        /// <returns>A settings object, never null.</returns>
+        internal Settings GetDbSettings()
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(@"SELECT CONVERT(VARCHAR, SERVERPROPERTY('collation'))", connection))
+            {
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    reader.Read();
+                    var collation = reader.GetString(0);
+
+                    return new Settings(collation);
+                }
+            }
+        }
+
+        internal List<TableType> GetTableTypes(Schema schema)
+        {
+            var tableTypes = new List<TableType>();
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(@"
+                SELECT DOMAIN_NAME
+                FROM INFORMATION_SCHEMA.DOMAINS
+                WHERE DATA_TYPE = 'table type' AND DOMAIN_SCHEMA = @schema
+                ", connection))
+            {
+                command.Parameters.AddWithValue("@schema", schema.Name);
+
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var tableName = reader.GetString(0);
+
+                        tableTypes.Add(new TableType(
+                            name: tableName,
+                            schema: schema,
+                            columns: GetTableTypeColumns(tableName)
+                        ));
+                    }
+                }
+            }
+
+            return tableTypes;
+        }
+
+        private List<Column> GetTableTypeColumns(string tableTypeName)
+        {
+            var columns = new List<Column>();
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(@"
+                SELECT c.name ,
+                       st.name ,
+                       c.max_length ,
+                       c.is_nullable
+                FROM   sys.table_types AS tt
+                    INNER JOIN sys.columns AS c ON c.object_id = tt.type_table_object_id
+                    INNER JOIN sys.systypes AS ST ON ST.xtype = c.system_type_id
+                WHERE  tt.name = @tableTypeName;
+                ", connection))
+            {
+                command.Parameters.AddWithValue("@tableTypeName", tableTypeName);
+
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var procedureName = reader.GetString(0);
+
+                        columns.Add(new Column(
+                            name: reader.GetString(0),
+                            dbType: reader.GetString(1),
+                            maxCharacterLength: reader.IsDBNull(2) ? (int?) null : reader.GetInt16(2),
+                            isNullable: reader.GetBoolean(3),
+                            columnDefault: null
+                        ));
+                    }
+                }
+            }
+
+            return columns;
         }
     }
 }

@@ -27,7 +27,7 @@
 
             if (DefaultValue != null)
             {
-                sqlString += $"DEFAULT ({DefaultValue})";
+                sqlString += $" DEFAULT ({DefaultValue})";
             }
 
             return sqlString;

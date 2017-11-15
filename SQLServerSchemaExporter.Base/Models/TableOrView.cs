@@ -21,7 +21,7 @@ namespace SQLServerSchemaExporter.Base.Models
             Columns = new List<Column>(columns).AsReadOnly();
         }
 
-        internal string ToSqlString()
+        internal virtual string ToSqlString()
         {
             var columnsString = string.Join(",\n", Columns.Select(c => c.ToSqlString()));
             return $@"CREATE TABLE [{Schema.Name}].[{Name}] ({columnsString})";

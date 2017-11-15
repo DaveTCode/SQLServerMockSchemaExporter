@@ -7,19 +7,31 @@ namespace SQLServerSchemaExporter.Base.Models
     /// </summary>
     public class Database
     {
+        internal string Name { get; }
+
+        internal Settings Settings { get; }
+
         internal IReadOnlyCollection<TableOrView> TablesAndViews { get; }
 
         internal IReadOnlyCollection<Procedure> StoredProcedures { get; }
 
         internal IReadOnlyCollection<Schema> Schemas { get; }
+
+        internal IReadOnlyCollection<TableType> TableTypes { get; }
         
-        internal Database(IEnumerable<Schema> schemas,
+        internal Database(string name,
+            Settings settings,
+            IEnumerable<Schema> schemas,
             IEnumerable<TableOrView> tablesAndviews, 
-            IEnumerable<Procedure> procedures)
+            IEnumerable<Procedure> procedures,
+            IEnumerable<TableType> tableTypes)
         {
+            Name = name;
+            Settings = settings;
             Schemas = new List<Schema>(schemas).AsReadOnly();
             TablesAndViews = new List<TableOrView>(tablesAndviews).AsReadOnly();
             StoredProcedures = new List<Procedure>(procedures).AsReadOnly();
+            TableTypes = new List<TableType>(tableTypes).AsReadOnly();
         }
     }
 }

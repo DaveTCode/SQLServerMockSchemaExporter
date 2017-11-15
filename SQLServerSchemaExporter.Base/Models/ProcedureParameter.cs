@@ -7,10 +7,13 @@
     {
         internal bool IsOutput { get; }
 
-        internal ProcedureParameter(string name, string dbType, int? maxCharacterLength, bool isOutput)
+        internal bool IsReadonly { get; }
+
+        internal ProcedureParameter(string name, string dbType, int? maxCharacterLength, bool isOutput, bool isReadonly)
             :base (name, dbType, maxCharacterLength)
         {
             IsOutput = isOutput;
+            IsReadonly = isReadonly;
         }
 
         internal override string ToSqlString()
@@ -20,6 +23,11 @@
             if (IsOutput)
             {
                 sqlString += " OUTPUT";
+            }
+
+            if (IsReadonly)
+            {
+                sqlString += " READONLY";
             }
 
             return sqlString;
