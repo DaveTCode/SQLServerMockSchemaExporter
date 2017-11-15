@@ -94,7 +94,7 @@ namespace SQLServerSchemaExporter.Base.DB
             using (var command = new SqlCommand($@"
                 SELECT TABLE_NAME
                 FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA = @schema", connection))
+                WHERE TABLE_SCHEMA = @schema", connection))
             {
                 command.Parameters.AddWithValue("@schema", schema.Name);
 
@@ -294,7 +294,7 @@ namespace SQLServerSchemaExporter.Base.DB
             using (var command = new SqlCommand(@"
                 SELECT c.name ,
                        st.name ,
-                       c.max_length ,
+                       COLUMNPROPERTY(c.object_id, c.name, 'charmaxlen') ,
                        c.is_nullable
                 FROM   sys.table_types AS tt
                     INNER JOIN sys.columns AS c ON c.object_id = tt.type_table_object_id
@@ -314,7 +314,7 @@ namespace SQLServerSchemaExporter.Base.DB
                         columns.Add(new Column(
                             name: reader.GetString(0),
                             dbType: reader.GetString(1),
-                            maxCharacterLength: reader.IsDBNull(2) ? (int?) null : reader.GetInt16(2),
+                            maxCharacterLength: reader.IsDBNull(2) ? (int?) null : reader.GetInt32(2),
                             isNullable: reader.GetBoolean(3),
                             columnDefault: null
                         ));
