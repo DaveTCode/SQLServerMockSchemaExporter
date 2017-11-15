@@ -260,3 +260,7 @@ paket-files/
 __pycache__/
 *.pyc
 /output
+
+# Don't include vscode settings folder
+.vscode
+
