@@ -19,23 +19,9 @@
             MaxCharacterLength = maxCharacterLength;
         }
 
-        /// <summary>
-        /// Calculate the sql string required to create this column in the database.
-        /// </summary>
-        internal virtual string ToSqlString()
-        {
-            var sqlString = $"{Name} {DbType}";
-            if (MaxCharacterLength.HasValue)
-            {
-                sqlString += $"({(MaxCharacterLength == -1 ? "MAX" : MaxCharacterLength.Value.ToString())})";
-            }
-
-            return sqlString;
-        }
-
         public override string ToString()
         {
-            return ToSqlString();
+            return Name;
         }
     }
 }

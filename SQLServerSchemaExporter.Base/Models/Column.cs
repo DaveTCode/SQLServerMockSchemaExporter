@@ -16,9 +16,13 @@
             DefaultValue = columnDefault;
         }
 
-        internal override string ToSqlString()
+        internal string ToSqlString()
         {
-            var sqlString = base.ToSqlString();
+            var sqlString = $"[{Name}] {DbType}";
+            if (MaxCharacterLength.HasValue)
+            {
+                sqlString += $"({(MaxCharacterLength == -1 ? "MAX" : MaxCharacterLength.Value.ToString())})";
+            }
 
             if (!IsNullable)
             {

@@ -10,15 +10,19 @@
         internal bool IsReadonly { get; }
 
         internal ProcedureParameter(string name, string dbType, int? maxCharacterLength, bool isOutput, bool isReadonly)
-            :base (name, dbType, maxCharacterLength)
+            : base (name, dbType, maxCharacterLength)
         {
             IsOutput = isOutput;
             IsReadonly = isReadonly;
         }
 
-        internal override string ToSqlString()
+        internal string ToSqlString()
         {
-            var sqlString = base.ToSqlString();
+            var sqlString = $"{Name} {DbType}";
+            if (MaxCharacterLength.HasValue)
+            {
+                sqlString += $"({(MaxCharacterLength == -1 ? "MAX" : MaxCharacterLength.Value.ToString())})";
+            }
 
             if (IsOutput)
             {
