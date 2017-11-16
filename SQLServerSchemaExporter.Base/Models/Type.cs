@@ -8,16 +8,16 @@ namespace SQLServerSchemaExporter.Base.Models
     /// </summary>
     internal class Type
     {
-        // TODO - Any want to ignore these at the data retrieval stage? This is ugly.
+        // TODO - Any way to ignore these at the data retrieval stage? This is ugly.
         private static readonly HashSet<string> TypesWithCharLengthThatShouldBeIgnored = new HashSet<string>
         {
             "XML",
             "TEXT"
         };
 
-        internal string DbType { get; }
+        private string DbType { get; }
 
-        internal int? MaxCharacterLength { get; }
+        private int? MaxCharacterLength { get; }
 
         internal Type(string dbType, int? maxCharacterLength)
         {

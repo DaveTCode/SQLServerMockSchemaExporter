@@ -12,7 +12,7 @@ namespace SQLServerSchemaExporter.Base.Models
 
         internal Schema Schema { get; }
 
-        internal IReadOnlyList<ProcedureParameter> Parameters { get; }
+        private IReadOnlyList<ProcedureParameter> Parameters { get; }
 
         internal Function(string name, Schema schema, List<ProcedureParameter> parameters)
         {
@@ -21,9 +21,9 @@ namespace SQLServerSchemaExporter.Base.Models
             Parameters = new List<ProcedureParameter>(parameters).AsReadOnly();
         }
 
-        internal abstract string ReturnSqlString();
+        protected abstract string ReturnSqlString();
 
-        internal abstract string ReturnValue();
+        protected abstract string ReturnValue();
 
         internal string ToSqlString()
         {

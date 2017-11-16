@@ -5,13 +5,13 @@
     /// </summary>
     internal class ProcedureParameter
     {
-        internal string Name { get; }
+        private string Name { get; }
 
-        internal Type Type { get; }
+        private Type Type { get; }
+        
+        private bool IsReadonly { get; }
 
         internal bool IsOutput { get; }
-
-        internal bool IsReadonly { get; }
 
         internal ProcedureParameter(string name, Type type, bool isOutput, bool isReadonly)
         {

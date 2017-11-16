@@ -7,7 +7,7 @@ namespace SQLServerSchemaExporter.Base.Models
     /// </summary>
     internal class Schema
     {
-        private readonly static HashSet<string> DefaultSchemas = new HashSet<string>
+        private static readonly HashSet<string> DefaultSchemas = new HashSet<string>
         {
             "db_accessadmin",
             "db_backupoperator", 
@@ -26,13 +26,7 @@ namespace SQLServerSchemaExporter.Base.Models
 
         internal string Name { get; }
 
-        internal bool IsDefaultSchema
-        {
-            get
-            {
-                return DefaultSchemas.Contains(Name);
-            }
-        }
+        internal bool IsDefaultSchema => DefaultSchemas.Contains(Name);
 
         internal Schema(string name)
         {

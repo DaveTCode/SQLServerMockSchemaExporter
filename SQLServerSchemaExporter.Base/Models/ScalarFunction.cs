@@ -1,14 +1,14 @@
 using System.Collections.Generic;
-using System.Linq;
 
 namespace SQLServerSchemaExporter.Base.Models
 {
+    /// <inheritdoc />
     /// <summary>
     /// Represents a single function in the database.
     /// </summary>
     internal class ScalarFunction : Function
     {
-        internal Type ReturnType { get; }
+        private Type ReturnType { get; }
 
         internal ScalarFunction(string name, Schema schema, Type returnType, List<ProcedureParameter> parameters)
             : base(name, schema, parameters)
@@ -16,12 +16,12 @@ namespace SQLServerSchemaExporter.Base.Models
             ReturnType = returnType;
         }
 
-        internal override string ReturnSqlString()
+        protected override string ReturnSqlString()
         {
             return ReturnType.ToSqlString();
         }
 
-        internal override string ReturnValue()
+        protected override string ReturnValue()
         {
             return "NULL";
         }

@@ -5,13 +5,13 @@
     /// </summary>
     internal class Column
     {
-        internal string Name { get; }
+        private string Name { get; }
 
-        internal Type Type { get; }
+        private Type Type { get; }
 
-        internal bool IsNullable { get; }
+        private bool IsNullable { get; }
 
-        internal string DefaultValue { get; }
+        private string DefaultValue { get; }
 
         internal Column(string name, Type type, bool isNullable, string columnDefault)
         {

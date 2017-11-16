@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace SQLServerSchemaExporter.Base.Models
 {
     /// <summary>

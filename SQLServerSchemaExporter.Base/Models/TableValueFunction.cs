@@ -3,12 +3,13 @@ using System.Linq;
 
 namespace SQLServerSchemaExporter.Base.Models
 {
+    /// <inheritdoc />
     /// <summary>
     /// Represents a single function in the database.
     /// </summary>
     internal class TableValueFunction : Function
     {
-        internal List<Column> ReturnColumns { get; }
+        private List<Column> ReturnColumns { get; }
 
         internal TableValueFunction(string name, Schema schema, List<Column> returnColumns, List<ProcedureParameter> parameters)
             : base(name, schema, parameters)
@@ -16,7 +17,7 @@ namespace SQLServerSchemaExporter.Base.Models
             ReturnColumns = returnColumns;
         }
 
-        internal override string ReturnSqlString()
+        protected override string ReturnSqlString()
         {
             return $@"@RtnValue TABLE
             (
@@ -24,7 +25,7 @@ namespace SQLServerSchemaExporter.Base.Models
             )";
         }
 
-        internal override string ReturnValue()
+        protected override string ReturnValue()
         {
             return "";
         }

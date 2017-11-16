@@ -1,5 +1,4 @@
-﻿using NLog;
-using SQLServerSchemaExporter.Base.Models;
+﻿using SQLServerSchemaExporter.Base.Models;
 using System.IO;
 using System.Xml;
 using System.Reflection;
@@ -17,8 +16,6 @@ namespace SQLServerSchemaExporter.Base
     {
         private readonly string _outputDirectory;
         private readonly bool _overwriteExistingFiles;
-
-        private readonly Logger _log = LogManager.GetCurrentClassLogger();
 
         public MockSchemaWriter(string outputDirectory, bool overwriteExistingFiles)
         {

@@ -4,11 +4,11 @@ using SQLServerSchemaExporter.Base;
 
 namespace SQLServerSchemaExporter.CommandLineApp
 {
-    class Program
+    internal static class Program
     {
-        private static readonly Logger _log = LogManager.GetCurrentClassLogger();
+        private static readonly Logger Log = LogManager.GetCurrentClassLogger();
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             var app = new CommandLineApplication();
             app.Command("extract", (command) =>
@@ -27,7 +27,7 @@ namespace SQLServerSchemaExporter.CommandLineApp
                     // Either user & pass or neither
                     if (userOption.HasValue() ^ passOption.HasValue())
                     {
-                        _log.Warn("Attempted to call with either username or password but not both");
+                        Log.Warn("Attempted to call with either username or password but not both");
                         command.ShowHelp();
                         return -1;
                     }

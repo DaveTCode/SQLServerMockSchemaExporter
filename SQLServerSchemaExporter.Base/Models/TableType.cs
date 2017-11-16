@@ -3,6 +3,7 @@ using System.Linq;
 
 namespace SQLServerSchemaExporter.Base.Models
 {
+    /// <inheritdoc />
     /// <summary>
     /// Represents a user defined table type in the database..
     /// </summary>

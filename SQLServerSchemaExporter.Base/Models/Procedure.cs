@@ -6,13 +6,13 @@ namespace SQLServerSchemaExporter.Base.Models
     /// <summary>
     /// Represents a single stored procedure in the database.
     /// </summary>
-    class Procedure
+    internal class Procedure
     {
         internal string Name { get; }
 
         internal Schema Schema { get; }
 
-        internal IReadOnlyList<ProcedureParameter> Parameters { get; }
+        private IReadOnlyList<ProcedureParameter> Parameters { get; }
 
         internal Procedure(string name, Schema schema, List<ProcedureParameter> parameters)
         {

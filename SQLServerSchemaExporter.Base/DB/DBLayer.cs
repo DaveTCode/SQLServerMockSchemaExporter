@@ -1,12 +1,10 @@
 ﻿using SQLServerSchemaExporter.Base.Models;
-using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
-using System.Text;
 
 namespace SQLServerSchemaExporter.Base.DB
 {
-    internal class DBLayer
+    internal class DbLayer
     {
         private readonly string _connectionString;
 
@@ -19,7 +17,7 @@ namespace SQLServerSchemaExporter.Base.DB
         /// </summary>
         /// <param name="server"></param>
         /// <param name="db"></param>
-        internal DBLayer(string server, string db)
+        internal DbLayer(string server, string db)
         {
             _connectionString = $"Server={server};Database={db};Trusted_Connection=True;";
         }
@@ -36,7 +34,7 @@ namespace SQLServerSchemaExporter.Base.DB
         /// <param name="db">The database we are extracting</param>
         /// <param name="user">The login on the SQL Server</param>
         /// <param name="pass">The password for the user</param>
-        internal DBLayer(string server, string db, string user, string pass)
+        internal DbLayer(string server, string db, string user, string pass)
         {
             _connectionString = $"Server={server};Database={db};User Id={user};Password={pass};";
         }
@@ -90,7 +88,7 @@ namespace SQLServerSchemaExporter.Base.DB
                     {
                         columns.Add(new Column(
                             name: reader.GetString(0),
-                            type: new Models.Type(
+                            type: new Type(
                                 dbType: reader.GetString(1),
                                 maxCharacterLength: reader.IsDBNull(2) ? (int?) null : reader.GetInt32(2)
                             ),
@@ -175,7 +173,7 @@ namespace SQLServerSchemaExporter.Base.DB
         /// in a form that means they can be reconstructed.
         /// </summary>
         /// <param name="schema">The schema where the procedure lives</param>
-        /// <param name="table">The procedures name in the database</param>
+        /// <param name="procedureName">The procedures name in the database</param>
         /// <returns>A list of 0-n parameters. Never null.</returns>
         private List<ProcedureParameter> GetProcedureParameters(Schema schema, string procedureName)
         {
@@ -208,7 +206,7 @@ namespace SQLServerSchemaExporter.Base.DB
 
                         schemas.Add(new ProcedureParameter(
                             name: reader.GetString(0),
-                            type: new Models.Type(
+                            type: new Type(
                                 dbType: dbType,
                                 maxCharacterLength: reader.IsDBNull(2) ? (int?) null : reader.GetInt32(2)
                             ),
@@ -360,7 +358,7 @@ namespace SQLServerSchemaExporter.Base.DB
                             tableTypes.Add(new ScalarFunction(
                                 name: functionName,
                                 schema: schema,
-                                returnType: new Models.Type(
+                                returnType: new Type(
                                     dbType: functionReturnType,
                                     maxCharacterLength: reader.IsDBNull(2) ? (int?) null : reader.GetInt32(2)
                                 ),

@@ -10,14 +10,14 @@ namespace SQLServerSchemaExporter.Base
     /// </summary>
     public class MockSchemaCreator
     {
-        private readonly DBLayer _dbLayer;
+        private readonly DbLayer _dbLayer;
 
         private readonly string _dbName;
 
         public MockSchemaCreator(string server, string db, string username, string password)
         {
             _dbName = db;
-            _dbLayer = (username == null) ? new DBLayer(server, db) : new DBLayer(server, db, username, password);
+            _dbLayer = (username == null) ? new DbLayer(server, db) : new DbLayer(server, db, username, password);
         }
 
         public Database CreateMockSchema()
