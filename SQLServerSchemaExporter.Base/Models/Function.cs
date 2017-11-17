@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace SQLServerSchemaExporter.Base.Models
@@ -6,17 +7,15 @@ namespace SQLServerSchemaExporter.Base.Models
     /// <summary>
     /// Represents a single function in the database.
     /// </summary>
-    internal abstract class Function
+    internal abstract class Function : BaseWritableObject
     {
-        internal string Name { get; }
-
         internal Schema Schema { get; }
 
         private IReadOnlyList<ProcedureParameter> Parameters { get; }
 
         internal Function(string name, Schema schema, List<ProcedureParameter> parameters)
+            : base(name)
         {
-            Name = name;
             Schema = schema;
             Parameters = new List<ProcedureParameter>(parameters).AsReadOnly();
         }
@@ -25,7 +24,7 @@ namespace SQLServerSchemaExporter.Base.Models
 
         protected abstract string ReturnValue();
 
-        internal string ToSqlString()
+        internal override string ToSqlFileContents()
         {
             var parameterList = string.Join(",\n", Parameters.Where(p => !p.IsOutput).Select(p => p.ToSqlString()));
             return $@"
@@ -36,6 +35,11 @@ namespace SQLServerSchemaExporter.Base.Models
                 BEGIN
                     RETURN {ReturnValue()};
                 END";
+        }
+
+        internal override FileInfo FilePath(string baseDir)
+        {
+            return new FileInfo(Path.Combine(baseDir, Schema.Name, "Functions", FileSafeName) + ".sql");
         }
     }
 }

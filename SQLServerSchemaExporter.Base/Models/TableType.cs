@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace SQLServerSchemaExporter.Base.Models
@@ -13,10 +14,15 @@ namespace SQLServerSchemaExporter.Base.Models
             : base(name, schema, columns)
         { }
 
-        internal override string ToSqlString()
+        internal override string ToSqlFileContents()
         {
             var columnsString = string.Join(",\n", Columns.Select(c => c.ToSqlString()));
             return $@"CREATE TYPE [{Schema.Name}].[{Name}] AS TABLE ({columnsString})";
+        }
+
+        internal override FileInfo FilePath(string baseDirectory)
+        {
+            return new FileInfo(Path.Combine(baseDirectory, Schema.Name, "TableTypes", FileSafeName) + ".sql");
         }
     }
 }

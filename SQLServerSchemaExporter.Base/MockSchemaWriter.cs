@@ -26,84 +26,23 @@ namespace SQLServerSchemaExporter.Base
 
         public void WriteDatabaseSchema(Database database)
         {
-            var securityDirectory = Path.Combine(_outputDirectory, "Security");
-            Directory.CreateDirectory(securityDirectory);
-
-            // TODO - refactor so we don't need to refer to each type in the database definition by hand.
-            foreach (var schema in database.Schemas)
+            // Iterate over each of the entries in the database schema and 
+            // write them to file ensuring that the directory exists.
+            foreach (var writableEntry in database.GetWritableEntries())
             {
-                var schemaDirectory = Path.Combine(_outputDirectory, MakeValidFilename(schema.Name));
-                var schemaDefinitionPath = Path.Combine(securityDirectory, MakeValidFilename(schema.Name)) + ".sql";
-                Directory.CreateDirectory(Path.Combine(schemaDirectory, "Tables"));
-                Directory.CreateDirectory(Path.Combine(schemaDirectory, "Procedures"));
-                Directory.CreateDirectory(Path.Combine(schemaDirectory, "TableTypes"));
-                Directory.CreateDirectory(Path.Combine(schemaDirectory, "Functions"));
+                var filePath = writableEntry.FilePath(_outputDirectory);
+                Directory.CreateDirectory(filePath.Directory.FullName);
 
-                if ((!File.Exists(schemaDefinitionPath) || _overwriteExistingFiles) && 
-                    !schema.IsDefaultSchema) // The default schemas will already exist so must not be recreated
+                if ((!filePath.Exists || _overwriteExistingFiles))
                 {
-                    using (var stream = File.CreateText(schemaDefinitionPath))
+                    using (var stream = filePath.CreateText())
                     {
-                        stream.WriteLine(schema.ToSqlString());
-                    }
-                }
-            }
-
-            foreach (var tableOrView in database.TablesAndViews)
-            {
-                var tableDefinitionPath = Path.Combine(_outputDirectory, MakeValidFilename(tableOrView.Schema.Name), "Tables", MakeValidFilename(tableOrView.Name)) + ".sql";
-                if (!File.Exists(tableDefinitionPath) || _overwriteExistingFiles)
-                {
-                    using (var stream = File.CreateText(tableDefinitionPath))
-                    {
-                        stream.Write(tableOrView.ToSqlString());
-                    }
-                }
-            }
-
-            foreach (var procedure in database.StoredProcedures)
-            {
-                var procedureDefinitionPath = Path.Combine(_outputDirectory, MakeValidFilename(procedure.Schema.Name), "Procedures", MakeValidFilename(procedure.Name)) + ".sql";
-                if (!File.Exists(procedureDefinitionPath) || _overwriteExistingFiles)
-                {
-                    using (var stream = File.CreateText(procedureDefinitionPath))
-                    {
-                        stream.Write(procedure.ToSqlString());
-                    }
-                }
-            }
-
-            foreach (var tableType in database.TableTypes)
-            {
-                var tableTypeDefinitionPath = Path.Combine(_outputDirectory, MakeValidFilename(tableType.Schema.Name), "TableTypes", MakeValidFilename(tableType.Name)) + ".sql";
-                if (!File.Exists(tableTypeDefinitionPath) || _overwriteExistingFiles)
-                {
-                    using (var stream = File.CreateText(tableTypeDefinitionPath))
-                    {
-                        stream.Write(tableType.ToSqlString());
-                    }
-                }
-            }
-
-            foreach (var function in database.Functions)
-            {
-                var tableTypeDefinitionPath = Path.Combine(_outputDirectory, MakeValidFilename(function.Schema.Name), "Functions", MakeValidFilename(function.Name)) + ".sql";
-                if (!File.Exists(tableTypeDefinitionPath) || _overwriteExistingFiles)
-                {
-                    using (var stream = File.CreateText(tableTypeDefinitionPath))
-                    {
-                        stream.Write(function.ToSqlString());
+                        stream.WriteLine(writableEntry.ToSqlFileContents());
                     }
                 }
             }
 
             WriteProjectFile(database);
-        }
-
-        private string MakeValidFilename(string filename)
-        {
-            // TODO - This is pretty dreadful, it could easily lead to conflicts between valid files but it'll do for now.
-            return Regex.Replace(filename, "[^a-zA-Z0-9_]+", "_", RegexOptions.Compiled);
         }
 
         private void WriteProjectFile(Database database)

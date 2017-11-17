@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 
 namespace SQLServerSchemaExporter.Base.Models
 {
     /// <summary>
     /// Simple class representing a schema in the database.
     /// </summary>
-    internal class Schema
+    internal class Schema : BaseWritableObject
     {
         private static readonly HashSet<string> DefaultSchemas = new HashSet<string>
         {
@@ -24,18 +25,18 @@ namespace SQLServerSchemaExporter.Base.Models
             "sys"
         };
 
-        internal string Name { get; }
-
         internal bool IsDefaultSchema => DefaultSchemas.Contains(Name);
 
-        internal Schema(string name)
+        internal Schema(string name) : base(name) { }
+
+        internal override string ToSqlFileContents()
         {
-            Name = name;
+            return $"CREATE SCHEMA {Name};";
         }
 
-        internal string ToSqlString()
+        internal override FileInfo FilePath(string baseDirectory)
         {
-            return $"CREATE SCHEMA {Name}";
+            return new FileInfo(Path.Combine(baseDirectory, "Security", FileSafeName) + ".sql");
         }
 
         public override string ToString()
