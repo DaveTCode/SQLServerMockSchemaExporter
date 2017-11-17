@@ -112,6 +112,7 @@ namespace SQLServerSchemaExporter.Base
                 nameNode.InnerText = database.Name;
             }
 
+            // TODO - Combine the following 3 queries into a single xpath expression. Possible?
             foreach(XmlNode nameNode in document.SelectNodes("/ns:Project/ns:PropertyGroup/ns:RootNamespace", manager))
             {
                 nameNode.InnerText = database.Name;
@@ -125,6 +126,19 @@ namespace SQLServerSchemaExporter.Base
             foreach(XmlNode nameNode in document.SelectNodes("/ns:Project/ns:PropertyGroup/ns:DefaultCollation", manager))
             {
                 nameNode.InnerText = database.Settings.Collation;
+            }
+
+            // Add a wildcard entry for each schema in the database
+            // We don't add a single wildcard entry because it will catch the
+            // built sql file in bin/*.sql
+            foreach(XmlNode directoriesNode in document.SelectNodes("/ns:Project/ns:ItemGroup", manager))
+            {
+                foreach(var schema in database.Schemas)
+                {
+                    var element = document.CreateElement("Build", document.DocumentElement.NamespaceURI);
+                    element.SetAttribute("Include", $"{schema.Name}\\**\\*.sql");
+                    directoriesNode.AppendChild(element);
+                }
             }
 
             document.Save(Path.Combine(_outputDirectory, database.Name) + ".sqlproj");
