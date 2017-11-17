@@ -12,7 +12,10 @@ namespace SQLServerSchemaExporter.Base.Models
         private static readonly HashSet<string> TypesWithCharLengthThatShouldBeIgnored = new HashSet<string>
         {
             "XML",
-            "TEXT"
+            "TEXT",
+            "NTEXT",
+            "IMAGE",
+            "SQL_VARIANT"
         };
 
         private string DbType { get; }
