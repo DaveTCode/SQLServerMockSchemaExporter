@@ -19,15 +19,29 @@ namespace SQLServerSchemaExporter.Base.Models
 
         protected override string ReturnSqlString()
         {
-            return $@"@RtnValue TABLE
-            (
-                {string.Join(",", ReturnColumns.Select(c => c.ToSqlString()))}
-            )";
+            if (ReturnColumns.Any())
+            {
+                return $@"@RtnValue TABLE
+                (
+                    {string.Join(",", ReturnColumns.Select(c => c.ToSqlString()))}
+                )";
+            }
+            else
+            {
+                return " TABLE";
+            }
         }
 
         protected override string ReturnValue()
         {
-            return "";
+            if (ReturnColumns.Any())
+            {
+                return "";
+            }
+            else
+            {
+                return "SELECT 1 AS 'a'";
+            }
         }
     }
 }
