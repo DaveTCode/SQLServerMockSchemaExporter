@@ -2,6 +2,7 @@
 using System.IO;
 using System.Xml;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace SQLServerSchemaExporter.Base
 {
@@ -31,8 +32,8 @@ namespace SQLServerSchemaExporter.Base
             // TODO - refactor so we don't need to refer to each type in the database definition by hand.
             foreach (var schema in database.Schemas)
             {
-                var schemaDirectory = Path.Combine(_outputDirectory, schema.Name);
-                var schemaDefinitionPath = Path.Combine(securityDirectory, schema.Name) + ".sql";
+                var schemaDirectory = Path.Combine(_outputDirectory, MakeValidFilename(schema.Name));
+                var schemaDefinitionPath = Path.Combine(securityDirectory, MakeValidFilename(schema.Name)) + ".sql";
                 Directory.CreateDirectory(Path.Combine(schemaDirectory, "Tables"));
                 Directory.CreateDirectory(Path.Combine(schemaDirectory, "Procedures"));
                 Directory.CreateDirectory(Path.Combine(schemaDirectory, "TableTypes"));
@@ -50,7 +51,7 @@ namespace SQLServerSchemaExporter.Base
 
             foreach (var tableOrView in database.TablesAndViews)
             {
-                var tableDefinitionPath = Path.Combine(_outputDirectory, tableOrView.Schema.Name, "Tables", tableOrView.Name) + ".sql";
+                var tableDefinitionPath = Path.Combine(_outputDirectory, MakeValidFilename(tableOrView.Schema.Name), "Tables", MakeValidFilename(tableOrView.Name)) + ".sql";
                 if (!File.Exists(tableDefinitionPath) || _overwriteExistingFiles)
                 {
                     using (var stream = File.CreateText(tableDefinitionPath))
@@ -62,7 +63,7 @@ namespace SQLServerSchemaExporter.Base
 
             foreach (var procedure in database.StoredProcedures)
             {
-                var procedureDefinitionPath = Path.Combine(_outputDirectory, procedure.Schema.Name, "Procedures", procedure.Name) + ".sql";
+                var procedureDefinitionPath = Path.Combine(_outputDirectory, MakeValidFilename(procedure.Schema.Name), "Procedures", MakeValidFilename(procedure.Name)) + ".sql";
                 if (!File.Exists(procedureDefinitionPath) || _overwriteExistingFiles)
                 {
                     using (var stream = File.CreateText(procedureDefinitionPath))
@@ -74,7 +75,7 @@ namespace SQLServerSchemaExporter.Base
 
             foreach (var tableType in database.TableTypes)
             {
-                var tableTypeDefinitionPath = Path.Combine(_outputDirectory, tableType.Schema.Name, "TableTypes", tableType.Name) + ".sql";
+                var tableTypeDefinitionPath = Path.Combine(_outputDirectory, MakeValidFilename(tableType.Schema.Name), "TableTypes", MakeValidFilename(tableType.Name)) + ".sql";
                 if (!File.Exists(tableTypeDefinitionPath) || _overwriteExistingFiles)
                 {
                     using (var stream = File.CreateText(tableTypeDefinitionPath))
@@ -86,7 +87,7 @@ namespace SQLServerSchemaExporter.Base
 
             foreach (var function in database.Functions)
             {
-                var tableTypeDefinitionPath = Path.Combine(_outputDirectory, function.Schema.Name, "Functions", function.Name) + ".sql";
+                var tableTypeDefinitionPath = Path.Combine(_outputDirectory, MakeValidFilename(function.Schema.Name), "Functions", MakeValidFilename(function.Name)) + ".sql";
                 if (!File.Exists(tableTypeDefinitionPath) || _overwriteExistingFiles)
                 {
                     using (var stream = File.CreateText(tableTypeDefinitionPath))
@@ -97,6 +98,12 @@ namespace SQLServerSchemaExporter.Base
             }
 
             WriteProjectFile(database);
+        }
+
+        private string MakeValidFilename(string filename)
+        {
+            // TODO - This is pretty dreadful, it could easily lead to conflicts between valid files but it'll do for now.
+            return Regex.Replace(filename, "[^a-zA-Z0-9_]+", "_", RegexOptions.Compiled);
         }
 
         private void WriteProjectFile(Database database)
