@@ -1,7 +1,9 @@
 ﻿using SQLServerSchemaExporter.Base.DB;
 using SQLServerSchemaExporter.Base.Models;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
+[assembly:InternalsVisibleTo("SQLServerSchemaExporter.Tests")]
 namespace SQLServerSchemaExporter.Base
 {
     /// <summary>
