@@ -2,7 +2,6 @@
 using System.IO;
 using System.Xml;
 using System.Reflection;
-using System.Text.RegularExpressions;
 
 namespace SQLServerSchemaExporter.Base
 {
